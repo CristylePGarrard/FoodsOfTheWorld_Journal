@@ -1,0 +1,348 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --paper: #f8f4ec;
+  --paper-dark: #eee7d9;
+  --ink: #2e302b;
+  --muted: #72736d;
+  --accent: #8b5e3c;
+  --accent-soft: #d8b894;
+  --green: #78936f;
+  --green-dark: #536b4e;
+  --white: #fffdf9;
+  --shadow: 0 18px 50px rgba(46, 48, 43, 0.12);
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(216, 184, 148, 0.18), transparent 30%),
+    var(--paper);
+  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+button {
+  font: inherit;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 48px 32px 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(36px, 5vw, 68px);
+  line-height: 0.98;
+  font-weight: 500;
+}
+
+.subtitle {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 19px;
+  font-style: italic;
+}
+
+.stats {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-family: Arial, sans-serif;
+}
+
+.stat {
+  min-width: 95px;
+  padding: 13px 15px;
+  background: rgba(255, 253, 249, 0.75);
+  border: 1px solid rgba(46, 48, 43, 0.08);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 25px;
+}
+
+.stat-label {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 32px 50px;
+}
+
+.map-card {
+  overflow: hidden;
+  background: var(--white);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.map-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 25px 28px 20px;
+}
+
+.map-heading h2 {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.map-heading p {
+  margin: 7px 0 0;
+  color: var(--muted);
+}
+
+.ghost-button {
+  padding: 10px 15px;
+  background: transparent;
+  border: 1px solid rgba(46, 48, 43, 0.2);
+  border-radius: 999px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.ghost-button:hover {
+  background: var(--paper);
+}
+
+#map {
+  height: 650px;
+  background: #dfe8e4;
+}
+
+.legend-card {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  margin: 15px 0 0;
+  padding: 14px 18px;
+  background: rgba(255, 253, 249, 0.8);
+  border-radius: 14px;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+}
+
+.legend-card > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.explored { background: var(--green); }
+.legend-dot.visited { background: var(--accent); }
+.legend-dot.unexplored { background: #c7cec9; }
+
+.leaflet-container {
+  font-family: Arial, sans-serif;
+}
+
+.country-tooltip {
+  font-family: Arial, sans-serif;
+  border: 0;
+  box-shadow: 0 8px 25px rgba(0,0,0,.15);
+  border-radius: 9px;
+  padding: 8px 11px;
+}
+
+.restaurant-pin {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25);
+  font-size: 15px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 25px;
+  background: rgba(31, 32, 29, 0.55);
+  backdrop-filter: blur(5px);
+}
+
+.modal-backdrop[hidden] {
+  display: none;
+}
+
+.journal-modal {
+  position: relative;
+  width: min(850px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 38px;
+  background: var(--white);
+  border-radius: 24px;
+  box-shadow: 0 25px 80px rgba(0,0,0,.3);
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 17px;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--paper-dark);
+  color: var(--ink);
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.entry-kicker {
+  margin: 0 0 7px;
+  color: var(--accent);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.entry-title {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 500;
+}
+
+.entry-meta {
+  margin: 8px 0 25px;
+  color: var(--muted);
+  font-size: 17px;
+}
+
+.entry-photo {
+  height: 260px;
+  margin: 0 0 25px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #d9c1a4, #9caf92);
+  color: white;
+  font-size: 64px;
+}
+
+.journal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.note {
+  padding: 18px;
+  background: var(--paper);
+  border-radius: 15px;
+}
+
+.note h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.note p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+.rating {
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+
+.restaurant-box {
+  margin-top: 20px;
+  padding: 20px;
+  border-top: 1px solid rgba(46,48,43,.12);
+}
+
+.restaurant-box h3 {
+  margin-top: 0;
+}
+
+.restaurant-box p {
+  margin: 7px 0;
+}
+
+.restaurant-box a {
+  color: var(--accent);
+}
+
+@media (max-width: 800px) {
+  .site-header {
+    display: block;
+    padding: 30px 20px 20px;
+  }
+
+  .stats {
+    margin-top: 20px;
+    justify-content: flex-start;
+  }
+
+  main {
+    padding: 0 15px 35px;
+  }
+
+  .map-heading {
+    align-items: flex-start;
+  }
+
+  #map {
+    height: 500px;
+  }
+
+  .journal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .journal-modal {
+    padding: 30px 22px;
+  }
+}

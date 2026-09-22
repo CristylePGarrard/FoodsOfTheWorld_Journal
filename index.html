@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Our Food Journey</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">OUR FOOD JOURNEY</p>
+      <h1>Exploring the world one bite at a time</h1>
+      <p class="subtitle">Two people. One table. A world of food.</p>
+    </div>
+
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <main>
+    <section class="map-card">
+      <div class="map-heading">
+        <div>
+          <h2>Where our food has taken us</h2>
+          <p>Hover over a marked country, then click to explore.</p>
+        </div>
+        <button id="resetMap" class="ghost-button">Reset view</button>
+      </div>
+
+      <div id="map"></div>
+    </section>
+
+    <section class="legend-card">
+      <div>
+        <span class="legend-dot explored"></span>
+        Explored
+      </div>
+      <div>
+        <span class="legend-dot visited"></span>
+        Restaurant location
+      </div>
+      <div>
+        <span class="legend-dot unexplored"></span>
+        Not explored yet
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <article class="journal-modal" role="dialog" aria-modal="true">
+      <button class="close-button" id="closeModal" aria-label="Close">×</button>
+
+      <div id="modalContent"></div>
+    </article>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
