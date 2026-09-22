@@ -1,7 +1,21 @@
 # FoodsOfTheWorld_Journal
 A site for my partner and I to record our food experiences and try as many foods from around the world as we can. 
+---
+## Run locally
 
+From this directory:
 
+```bash
+python3 -m http.server 8000
+```
+
+Then open:
+
+http://localhost:8000
+
+Do not open `index.html` directly with `file://` because the browser will block the map data request.
+
+---
 ````
                   GOOGLE SHEETS
                        │
