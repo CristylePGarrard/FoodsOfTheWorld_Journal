@@ -60,6 +60,7 @@ const experiences = [
     }
   },
 
+
   {
     id: "002",
 
@@ -98,6 +99,7 @@ const experiences = [
       website: ""
     }
   },
+
 
   {
     id: "003",
@@ -138,6 +140,7 @@ const experiences = [
     }
   },
 
+
   {
     id: "004",
 
@@ -176,6 +179,7 @@ const experiences = [
       website: "#"
     }
   },
+
 
   {
     id: "005",
@@ -229,9 +233,13 @@ const map = L.map("map", {
 
 
 // OpenStreetMap background
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "&copy; OpenStreetMap contributors"
-}).addTo(map);
+
+L.tileLayer(
+  "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  {
+    attribution: "&copy; OpenStreetMap contributors"
+  }
+).addTo(map);
 
 
 // ============================================================
@@ -245,6 +253,7 @@ const defaultStyle = {
   fillOpacity: 0.55
 };
 
+
 const exploredStyle = {
   color: "#536b4e",
   weight: 1.2,
@@ -252,12 +261,14 @@ const exploredStyle = {
   fillOpacity: 0.72
 };
 
+
 const hoverExploredStyle = {
   color: "#8b5e3c",
   weight: 2,
   fillColor: "#d8b894",
   fillOpacity: 0.9
 };
+
 
 const hoverUnexploredStyle = {
   color: "#8b5e3c",
@@ -275,47 +286,135 @@ const countryLayers = new Map();
 
 
 // ============================================================
+// NORMALIZE COUNTRY CODE
+// ============================================================
+//
+// Our food data uses:
+//
+// IND
+// VNM
+// SLV
+// JPN
+// MEX
+//
+// Make sure everything is compared consistently.
+//
+
+function normalizeCountryCode(code) {
+
+  if (!code) {
+    return "";
+  }
+
+  return String(code)
+    .trim()
+    .toUpperCase();
+
+}
+
+
+// ============================================================
 // GET COUNTRY CODE FROM GEOJSON
 // ============================================================
 //
-// Different GeoJSON datasets can use different property names
-// for the ISO country code. Keep that logic in one place.
+// IMPORTANT:
 //
-// Our food data uses standard ISO-3166 alpha-3 codes:
-// IND = India
-// VNM = Vietnam
-// SLV = El Salvador
-// JPN = Japan
-// MEX = Mexico
+// The GeoJSON dataset we are using currently stores the
+// ISO-3 country code as:
+//
+// ISO3166-1-Alpha-3
+//
+// This is why the old code using:
+//
+// feature.properties.ISO_A3
+//
+// was not finding our countries.
+//
+// We support both the current format and several common
+// alternatives so this code is more robust.
 //
 
 function getCountryCode(feature) {
 
-  const properties = feature.properties || {};
+  const properties =
+    feature.properties || {};
+
 
   const possibleCodes = [
+
+    properties["ISO3166-1-Alpha-3"],
+
     properties.ISO_A3,
+
+    properties.iso_a3,
+
     properties.ADM0_A3,
+
+    properties.adm0_a3,
+
     properties.SOV_A3,
-    properties.ISO_A3_EH
+
+    properties.sov_a3,
+
+    properties.ISO_A3_EH,
+
+    properties.iso_a3_eh
+
   ];
+
 
   for (const code of possibleCodes) {
 
+    const normalizedCode =
+      normalizeCountryCode(code);
+
+
+    // -99 means the GeoJSON does not have
+    // an assigned ISO code for that feature.
+
     if (
-      code &&
-      code !== "-99"
+      normalizedCode &&
+      normalizedCode !== "-99"
     ) {
 
-      return String(code)
-        .trim()
-        .toUpperCase();
+      return normalizedCode;
 
     }
 
   }
 
+
   return null;
+
+}
+
+
+// ============================================================
+// GET COUNTRY NAME
+// ============================================================
+
+function getCountryName(feature) {
+
+  const properties =
+    feature.properties || {};
+
+
+  return (
+
+    properties.name ||
+
+    properties.NAME ||
+
+    properties.ADMIN ||
+
+    properties.NAME_LONG ||
+
+    properties.name_long ||
+
+    "Unknown"
+
+  );
+
 }
 
 
@@ -325,45 +424,27 @@ function getCountryCode(feature) {
 
 function experiencesForCountry(countryCode) {
 
-  if (!countryCode) {
+  const normalizedCode =
+    normalizeCountryCode(
+      countryCode
+    );
+
+
+  if (!normalizedCode) {
     return [];
   }
 
-  const normalizedCode =
-    String(countryCode)
-      .trim()
-      .toUpperCase();
 
   return experiences.filter(
     experience => {
 
-      const experienceCode =
-        String(experience.countryCode || "")
-          .trim()
-          .toUpperCase();
-
-      return experienceCode === normalizedCode;
+      return (
+        normalizeCountryCode(
+          experience.countryCode
+        ) === normalizedCode
+      );
 
     }
-  );
-}
-
-
-// ============================================================
-// COUNTRY NAME
-// ============================================================
-
-function getCountryName(feature) {
-
-  const properties =
-    feature.properties || {};
-
-  return (
-    properties.ADMIN ||
-    properties.NAME ||
-    properties.NAME_LONG ||
-    properties.name ||
-    "Unknown"
   );
 
 }
@@ -387,6 +468,7 @@ fetch(
 
     }
 
+
     return response.json();
 
   })
@@ -395,34 +477,68 @@ fetch(
   .then(data => {
 
     console.log(
-      "World map loaded.",
-      data.features.length,
-      "countries found."
+      "World map loaded successfully."
+    );
+
+
+    console.log(
+      "Countries in GeoJSON:",
+      data.features.length
     );
 
 
     // --------------------------------------------------------
-    // Create the country layers
+    // SHOW OUR FOOD DATA IN THE CONSOLE
+    // --------------------------------------------------------
+
+    console.log(
+      "Our food journey:"
+    );
+
+
+    experiences.forEach(
+      experience => {
+
+        console.log(
+          experience.dish,
+          "→",
+          experience.countryCode
+        );
+
+      }
+    );
+
+
+    // --------------------------------------------------------
+    // CREATE COUNTRY LAYERS
     // --------------------------------------------------------
 
     L.geoJSON(
+
       data,
+
       {
 
-        // ----------------------------------------------------
+        // ====================================================
         // COUNTRY STYLE
-        // ----------------------------------------------------
+        // ====================================================
 
         style: feature => {
 
           const countryCode =
-            getCountryCode(feature);
+            getCountryCode(
+              feature
+            );
+
 
           const foods =
             experiencesForCountry(
               countryCode
             );
 
+
+          // Countries with food experiences
+          // are highlighted.
 
           if (foods.length > 0) {
 
@@ -431,14 +547,16 @@ fetch(
           }
 
 
+          // Everything else stays neutral.
+
           return defaultStyle;
 
         },
 
 
-        // ----------------------------------------------------
+        // ====================================================
         // COUNTRY EVENTS
-        // ----------------------------------------------------
+        // ====================================================
 
         onEachFeature: (
           feature,
@@ -446,10 +564,16 @@ fetch(
         ) => {
 
           const countryCode =
-            getCountryCode(feature);
+            getCountryCode(
+              feature
+            );
+
 
           const countryName =
-            getCountryName(feature);
+            getCountryName(
+              feature
+            );
+
 
           const foods =
             experiencesForCountry(
@@ -458,7 +582,7 @@ fetch(
 
 
           // --------------------------------------------------
-          // Save the layer
+          // SAVE THE COUNTRY LAYER
           // --------------------------------------------------
 
           if (countryCode) {
@@ -472,31 +596,43 @@ fetch(
 
 
           // --------------------------------------------------
-          // DEBUGGING
+          // DEBUG INFORMATION
           // --------------------------------------------------
           //
-          // This will show us exactly what the map thinks
-          // each country's code is.
+          // This lets us see exactly what the map is doing.
           //
 
-          console.log(
-            countryName,
-            "→",
-            countryCode,
-            "→",
-            foods.length,
-            "foods"
-          );
+          if (
+            [
+              "IND",
+              "VNM",
+              "SLV",
+              "JPN",
+              "MEX"
+            ].includes(countryCode)
+          ) {
+
+            console.log(
+              "FOOD COUNTRY FOUND:",
+              countryName,
+              countryCode,
+              foods.map(
+                food => food.dish
+              )
+            );
+
+          }
 
 
-          // --------------------------------------------------
+          // ==================================================
           // HOVER TEXT
-          // --------------------------------------------------
+          // ==================================================
 
           if (foods.length > 0) {
 
             const foodCount =
               foods.length;
+
 
             const foodLabel =
               foodCount === 1
@@ -519,7 +655,8 @@ fetch(
 
               {
                 sticky: true,
-                className: "country-tooltip"
+                className:
+                  "country-tooltip"
               }
 
             );
@@ -527,19 +664,23 @@ fetch(
           } else {
 
             layer.bindTooltip(
+
               countryName,
+
               {
                 sticky: true,
-                className: "country-tooltip"
+                className:
+                  "country-tooltip"
               }
+
             );
 
           }
 
 
-          // --------------------------------------------------
+          // ==================================================
           // MOUSE OVER
-          // --------------------------------------------------
+          // ==================================================
 
           layer.on(
             "mouseover",
@@ -563,9 +704,9 @@ fetch(
           );
 
 
-          // --------------------------------------------------
+          // ==================================================
           // MOUSE OUT
-          // --------------------------------------------------
+          // ==================================================
 
           layer.on(
             "mouseout",
@@ -589,9 +730,9 @@ fetch(
           );
 
 
-          // --------------------------------------------------
+          // ==================================================
           // CLICK
-          // --------------------------------------------------
+          // ==================================================
 
           layer.on(
             "click",
@@ -620,28 +761,6 @@ fetch(
       }
 
     ).addTo(map);
-
-
-    // --------------------------------------------------------
-    // DEBUG: SHOW WHICH COUNTRIES HAVE FOOD
-    // --------------------------------------------------------
-
-    console.log(
-      "Countries represented in our food data:"
-    );
-
-
-    experiences.forEach(
-      experience => {
-
-        console.log(
-          experience.dish,
-          "→",
-          experience.countryCode
-        );
-
-      }
-    );
 
   })
 
@@ -684,198 +803,6 @@ fetch(
 
   });
 
-// ============================================================
-// LOAD WORLD MAP
-// ============================================================
-function getCountryCode(feature) {
-  return (
-          feature.properties.ISO_A3 ||
-          feature.properties.ADMG_A3 ||
-          feature.properties.SOV_A3 ||
-          feature.properties.ISO_A3_EH ||
-          null
-    );
-}
-
-fetch(
-  "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-)
-  .then(response => {
-    if (!response.ok) {
-      throw new Error("Could not load country map data.");
-    }
-
-    return response.json();
-  })
-
-  .then(data => {
-
-    L.geoJSON(data, {
-
-      style: feature => {
-
-        const countryCode = getCountryCode(feature); 
-
-        const foods = experiencesForCountry(countryCode);
-
-        if (foods.length > 0) {
-          return exploredStyle;
-        }
-
-        return defaultStyle;
-      },
-
-
-      onEachFeature: (feature, layer) => {
-
-        const countryCode = getCountryCode(feature); 
-
-        const countryName = getCountryName(feature);
-
-        const foods = experiencesForCountry(countryCode);
-
-        countryLayers.set(countryCode, layer);
-
-
-        // ---------------------------------------------
-        // HOVER TEXT
-        // ---------------------------------------------
-
-        if (foods.length > 0) {
-
-          const foodCount = foods.length;
-
-          const foodLabel =
-            foodCount === 1
-              ? "food explored"
-              : "foods explored";
-
-          layer.bindTooltip(
-            `
-              <strong>${countryName}</strong>
-              <br>
-              ${foodCount} ${foodLabel}
-            `,
-            {
-              sticky: true,
-              className: "country-tooltip"
-            }
-          );
-
-        } else {
-
-          layer.bindTooltip(countryName, {
-            sticky: true,
-            className: "country-tooltip"
-          });
-
-        }
-
-
-        // ---------------------------------------------
-        // MOUSE OVER
-        // ---------------------------------------------
-
-        layer.on("mouseover", event => {
-
-          if (foods.length > 0) {
-
-            event.target.setStyle(
-              hoverExploredStyle
-            );
-
-          } else {
-
-            event.target.setStyle(
-              hoverUnexploredStyle
-            );
-
-          }
-
-        });
-
-
-        // ---------------------------------------------
-        // MOUSE OUT
-        // ---------------------------------------------
-
-        layer.on("mouseout", event => {
-
-          if (foods.length > 0) {
-
-            event.target.setStyle(
-              exploredStyle
-            );
-
-          } else {
-
-            event.target.setStyle(
-              defaultStyle
-            );
-
-          }
-
-        });
-
-
-        // ---------------------------------------------
-        // CLICK
-        // ---------------------------------------------
-
-        layer.on("click", () => {
-
-          if (foods.length > 0) {
-
-            showCountryJournal(
-              countryName,
-              countryCode
-            );
-
-          } else {
-
-            showUnexploredCountry(
-              countryName
-            );
-
-          }
-
-        });
-
-      }
-
-    }).addTo(map);
-
-  })
-
-  .catch(error => {
-
-    console.error(
-      "Could not load world map:",
-      error
-    );
-
-    document.getElementById("map").insertAdjacentHTML(
-      "beforeend",
-
-      `
-        <div
-          style="
-            padding:20px;
-            background:white;
-            position:absolute;
-            z-index:1000;
-            top:20px;
-            left:20px;
-            border-radius:10px;
-          "
-        >
-          The country map data could not be loaded.
-        </div>
-      `
-    );
-
-  });
-
 
 // ============================================================
 // COUNTRY JOURNAL
@@ -887,45 +814,56 @@ function showCountryJournal(
 ) {
 
   const foods =
-    experiencesForCountry(countryCode);
+    experiencesForCountry(
+      countryCode
+    );
 
 
   // Get unique cuisines
+
   const cuisines =
-    [...new Set(
-      foods.map(food => food.cuisine)
-    )];
+    [
+      ...new Set(
+        foods.map(
+          food => food.cuisine
+        )
+      )
+    ];
 
 
   const foodList =
-    foods.map(food => {
+    foods
+      .map(
+        food => {
 
-      return `
-        <button
-          class="food-entry-button"
-          data-id="${food.id}"
-        >
+          return `
+            <button
+              class="food-entry-button"
+              data-id="${food.id}"
+            >
 
-          <span class="food-entry-emoji">
-            ${food.photo}
-          </span>
+              <span class="food-entry-emoji">
+                ${food.photo}
+              </span>
 
-          <span class="food-entry-info">
+              <span class="food-entry-info">
 
-            <strong>
-              ${food.dish}
-            </strong>
+                <strong>
+                  ${food.dish}
+                </strong>
 
-            <small>
-              ${food.cuisine}
-            </small>
+                <small>
+                  ${food.cuisine}
+                </small>
 
-          </span>
+              </span>
 
-        </button>
-      `;
+            </button>
+          `;
 
-    }).join("");
+        }
+      )
+      .join("");
 
 
   document.getElementById(
@@ -943,13 +881,20 @@ function showCountryJournal(
     <p class="entry-meta">
 
       ${foods.length}
-      ${foods.length === 1 ? "food" : "foods"}
+
+      ${foods.length === 1
+        ? "food"
+        : "foods"}
+
       explored
 
       ·
 
       ${cuisines.length}
-      ${cuisines.length === 1 ? "cuisine" : "cuisines"}
+
+      ${cuisines.length === 1
+        ? "cuisine"
+        : "cuisines"}
 
     </p>
 
@@ -976,24 +921,29 @@ function showCountryJournal(
   // Connect food buttons
 
   document
-    .querySelectorAll(".food-entry-button")
-    .forEach(button => {
+    .querySelectorAll(
+      ".food-entry-button"
+    )
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          openJournal(
-            button.dataset.id
-          );
+            openJournal(
+              button.dataset.id
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 
   openModal();
+
 }
 
 
@@ -1034,6 +984,7 @@ function showUnexploredCountry(
 
 
   openModal();
+
 }
 
 
@@ -1045,7 +996,8 @@ function openJournal(id) {
 
   const item =
     experiences.find(
-      experience => experience.id === id
+      experience =>
+        experience.id === id
     );
 
 
@@ -1177,18 +1129,25 @@ function openJournal(id) {
 
       <p>
 
-        <a
-          href="${item.restaurant.website}"
-          target="_blank"
-          rel="noopener"
-        >
-          Restaurant website ↗
-        </a>
+        ${
+          item.restaurant.website
+            ? `
+              <a
+                href="${item.restaurant.website}"
+                target="_blank"
+                rel="noopener"
+              >
+                Restaurant website ↗
+              </a>
+            `
+            : ""
+        }
 
       </p>
 
 
       <p>
+
         <strong>
           Would we go back?
         </strong>
@@ -1203,6 +1162,7 @@ function openJournal(id) {
 
 
       <p>
+
         <strong>
           Would we have it again?
         </strong>
@@ -1221,6 +1181,7 @@ function openJournal(id) {
 
 
   openModal();
+
 }
 
 
@@ -1233,11 +1194,13 @@ function stars(value) {
   const full =
     Math.floor(value);
 
+
   const half =
     value % 1 !== 0;
 
 
   return (
+
     "★".repeat(full) +
 
     (half ? "½" : "") +
@@ -1247,6 +1210,7 @@ function stars(value) {
       full -
       (half ? 1 : 0)
     )
+
   );
 
 }
@@ -1275,7 +1239,9 @@ function closeModal() {
 
 
 document
-  .getElementById("closeModal")
+  .getElementById(
+    "closeModal"
+  )
   .addEventListener(
     "click",
     closeModal
@@ -1283,7 +1249,9 @@ document
 
 
 document
-  .getElementById("modalBackdrop")
+  .getElementById(
+    "modalBackdrop"
+  )
   .addEventListener(
     "click",
     event => {
@@ -1322,7 +1290,9 @@ document.addEventListener(
 // ============================================================
 
 document
-  .getElementById("resetMap")
+  .getElementById(
+    "resetMap"
+  )
   .addEventListener(
     "click",
     () => {
@@ -1423,3 +1393,4 @@ document.getElementById(
   </div>
 
 `;
+
