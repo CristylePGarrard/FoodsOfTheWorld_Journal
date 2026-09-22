@@ -274,18 +274,78 @@ const hoverUnexploredStyle = {
 const countryLayers = new Map();
 
 
-// Get all foods associated with a country
+// ============================================================
+// GET COUNTRY CODE FROM GEOJSON
+// ============================================================
+//
+// Different GeoJSON datasets can use different property names
+// for the ISO country code. Keep that logic in one place.
+//
+// Our food data uses standard ISO-3166 alpha-3 codes:
+// IND = India
+// VNM = Vietnam
+// SLV = El Salvador
+// JPN = Japan
+// MEX = Mexico
+//
+
+function getCountryCode(feature) {
+
+  const properties = feature.properties || {};
+
+  const possibleCodes = [
+    properties.ISO_A3,
+    properties.ADM0_A3,
+    properties.SOV_A3,
+    properties.ISO_A3_EH
+  ];
+
+  for (const code of possibleCodes) {
+
+    if (
+      code &&
+      code !== "-99"
+    ) {
+
+      return String(code)
+        .trim()
+        .toUpperCase();
+
+    }
+
+  }
+
+  return null;
+}
+
+
+// ============================================================
+// GET FOODS FOR A COUNTRY
+// ============================================================
+
 function experiencesForCountry(countryCode) {
+
   if (!countryCode) {
     return [];
   }
 
-  const normalizedCode = String(countrycode).trim().toUpperCase();
+  const normalizedCode =
+    String(countryCode)
+      .trim()
+      .toUpperCase();
 
-  return experience.filter(experience => {
-    const experienceCode = String(experience.countryCode).trim().toUpperCase();
-    return experienceCode === normalizedCode;
-  });
+  return experiences.filter(
+    experience => {
+
+      const experienceCode =
+        String(experience.countryCode || "")
+          .trim()
+          .toUpperCase();
+
+      return experienceCode === normalizedCode;
+
+    }
+  );
 }
 
 
@@ -294,14 +354,335 @@ function experiencesForCountry(countryCode) {
 // ============================================================
 
 function getCountryName(feature) {
+
+  const properties =
+    feature.properties || {};
+
   return (
-    feature.properties.ADMIN ||
-    feature.properties.NAME ||
-    feature.properties.name ||
+    properties.ADMIN ||
+    properties.NAME ||
+    properties.NAME_LONG ||
+    properties.name ||
     "Unknown"
   );
+
 }
 
+
+// ============================================================
+// LOAD WORLD MAP
+// ============================================================
+
+fetch(
+  "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
+)
+
+  .then(response => {
+
+    if (!response.ok) {
+
+      throw new Error(
+        "Could not load country map data."
+      );
+
+    }
+
+    return response.json();
+
+  })
+
+
+  .then(data => {
+
+    console.log(
+      "World map loaded.",
+      data.features.length,
+      "countries found."
+    );
+
+
+    // --------------------------------------------------------
+    // Create the country layers
+    // --------------------------------------------------------
+
+    L.geoJSON(
+      data,
+      {
+
+        // ----------------------------------------------------
+        // COUNTRY STYLE
+        // ----------------------------------------------------
+
+        style: feature => {
+
+          const countryCode =
+            getCountryCode(feature);
+
+          const foods =
+            experiencesForCountry(
+              countryCode
+            );
+
+
+          if (foods.length > 0) {
+
+            return exploredStyle;
+
+          }
+
+
+          return defaultStyle;
+
+        },
+
+
+        // ----------------------------------------------------
+        // COUNTRY EVENTS
+        // ----------------------------------------------------
+
+        onEachFeature: (
+          feature,
+          layer
+        ) => {
+
+          const countryCode =
+            getCountryCode(feature);
+
+          const countryName =
+            getCountryName(feature);
+
+          const foods =
+            experiencesForCountry(
+              countryCode
+            );
+
+
+          // --------------------------------------------------
+          // Save the layer
+          // --------------------------------------------------
+
+          if (countryCode) {
+
+            countryLayers.set(
+              countryCode,
+              layer
+            );
+
+          }
+
+
+          // --------------------------------------------------
+          // DEBUGGING
+          // --------------------------------------------------
+          //
+          // This will show us exactly what the map thinks
+          // each country's code is.
+          //
+
+          console.log(
+            countryName,
+            "→",
+            countryCode,
+            "→",
+            foods.length,
+            "foods"
+          );
+
+
+          // --------------------------------------------------
+          // HOVER TEXT
+          // --------------------------------------------------
+
+          if (foods.length > 0) {
+
+            const foodCount =
+              foods.length;
+
+            const foodLabel =
+              foodCount === 1
+                ? "food explored"
+                : "foods explored";
+
+
+            layer.bindTooltip(
+
+              `
+                <strong>
+                  ${countryName}
+                </strong>
+
+                <br>
+
+                ${foodCount}
+                ${foodLabel}
+              `,
+
+              {
+                sticky: true,
+                className: "country-tooltip"
+              }
+
+            );
+
+          } else {
+
+            layer.bindTooltip(
+              countryName,
+              {
+                sticky: true,
+                className: "country-tooltip"
+              }
+            );
+
+          }
+
+
+          // --------------------------------------------------
+          // MOUSE OVER
+          // --------------------------------------------------
+
+          layer.on(
+            "mouseover",
+            event => {
+
+              if (foods.length > 0) {
+
+                event.target.setStyle(
+                  hoverExploredStyle
+                );
+
+              } else {
+
+                event.target.setStyle(
+                  hoverUnexploredStyle
+                );
+
+              }
+
+            }
+          );
+
+
+          // --------------------------------------------------
+          // MOUSE OUT
+          // --------------------------------------------------
+
+          layer.on(
+            "mouseout",
+            event => {
+
+              if (foods.length > 0) {
+
+                event.target.setStyle(
+                  exploredStyle
+                );
+
+              } else {
+
+                event.target.setStyle(
+                  defaultStyle
+                );
+
+              }
+
+            }
+          );
+
+
+          // --------------------------------------------------
+          // CLICK
+          // --------------------------------------------------
+
+          layer.on(
+            "click",
+            () => {
+
+              if (foods.length > 0) {
+
+                showCountryJournal(
+                  countryName,
+                  countryCode
+                );
+
+              } else {
+
+                showUnexploredCountry(
+                  countryName
+                );
+
+              }
+
+            }
+          );
+
+        }
+
+      }
+
+    ).addTo(map);
+
+
+    // --------------------------------------------------------
+    // DEBUG: SHOW WHICH COUNTRIES HAVE FOOD
+    // --------------------------------------------------------
+
+    console.log(
+      "Countries represented in our food data:"
+    );
+
+
+    experiences.forEach(
+      experience => {
+
+        console.log(
+          experience.dish,
+          "→",
+          experience.countryCode
+        );
+
+      }
+    );
+
+  })
+
+
+  // ========================================================
+  // MAP ERROR
+  // ========================================================
+
+  .catch(error => {
+
+    console.error(
+      "Could not load world map:",
+      error
+    );
+
+
+    document
+      .getElementById("map")
+      .insertAdjacentHTML(
+
+        "beforeend",
+
+        `
+          <div
+            style="
+              padding:20px;
+              background:white;
+              position:absolute;
+              z-index:1000;
+              top:20px;
+              left:20px;
+              border-radius:10px;
+            "
+          >
+            The country map data could not be loaded.
+          </div>
+        `
+
+      );
+
+  });
 
 // ============================================================
 // LOAD WORLD MAP
