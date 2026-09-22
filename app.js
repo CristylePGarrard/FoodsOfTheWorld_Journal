@@ -276,9 +276,16 @@ const countryLayers = new Map();
 
 // Get all foods associated with a country
 function experiencesForCountry(countryCode) {
-  return experiences.filter(
-    experience => experience.countryCode === countryCode
-  );
+  if (!countryCode) {
+    return [];
+  }
+
+  const normalizedCode = String(countrycode).trim().toUpperCase();
+
+  return experience.filter(experience => {
+    const experienceCode = String(experience.countryCode).trim().toUpperCase();
+    return experienceCode === normalizedCode;
+  });
 }
 
 
@@ -299,6 +306,15 @@ function getCountryName(feature) {
 // ============================================================
 // LOAD WORLD MAP
 // ============================================================
+function getCountryCode(feature) {
+  return (
+          feature.properties.ISO_A3 ||
+          feature.properties.ADMG_A3 ||
+          feature.properties.SOV_A3 ||
+          feature.properties.ISO_A3_EH ||
+          null
+    );
+}
 
 fetch(
   "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
@@ -317,7 +333,7 @@ fetch(
 
       style: feature => {
 
-        const countryCode = feature.properties.ISO_A3;
+        const countryCode = getCountryCode(feature); 
 
         const foods = experiencesForCountry(countryCode);
 
@@ -331,7 +347,7 @@ fetch(
 
       onEachFeature: (feature, layer) => {
 
-        const countryCode = feature.properties.ISO_A3;
+        const countryCode = getCountryCode(feature); 
 
         const countryName = getCountryName(feature);
 
