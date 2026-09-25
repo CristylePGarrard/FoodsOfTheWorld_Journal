@@ -246,64 +246,331 @@ L.tileLayer(
 // MAP COLORS
 // ============================================================
 //
-// The map gets darker as we explore more foods from a country.
+// All of the map's visual colors live here.
 //
-// 0 foods  = neutral
-// 1 food   = light green
-// 2 foods  = medium green
-// 3+ foods = deep green
+// If we decide later that the map should be blue, yellow,
+// purple, etc., we only need to change the theme values here.
+// The heat-map calculations will automatically create all of
+// the colors in between.
 //
-// This means the map will continue to evolve automatically
-// as we add more food experiences.
-//
+//Our max food value should be the max value of foods per country. 
 
+let maximumFoodCount = getMaximumFoodCount(experiences);
+
+function getMaximumFoodCount(experiences) {
+  // if array is empty return 0
+  if (!experiences || experiences.length === 0) return 0;
+  const countryCounts = {};
+  // 1. Loop through experiences and count entries per country
+  for (const exp of experiences){
+    const code = exp.countryCode;
+    countryCounts[code] = (countryCounts[code] || 0) + 1;
+  }
+  // 2. Find and return highest number from counts
+  return Math.max(...Object.values(countryCounts));
+}
+
+const heatMapTheme = {
+
+  // Lightest color = countries with fewer foods
+  light: "#dce7d8",
+
+  // Darkest color = countries with more foods
+  dark: "#375c30",
+
+  // Countries we haven't explored yet
+  unexplored: "#cbd2ce",
+
+  // Normal country borders
+  border: "#536b4e",
+
+  // Border when hovering over a country
+  hoverBorder: "#8b5e3c"
+
+};
+
+
+// Countries we have not explored yet.
 const defaultStyle = {
-  color: "#aeb8b2",
+
+  color: heatMapTheme.border,
+
   weight: 0.8,
-  fillColor: "#d5dbd7",
-  fillOpacity: 0.58
+
+  fillColor: heatMapTheme.unexplored,
+
+  fillOpacity: 0.55
+
 };
 
 
-const exploredLightStyle = {
-  color: "#6f8768",
-  weight: 1.1,
-  fillColor: "#b8c9b1",
-  fillOpacity: 0.78
-};
+// ============================================================
+// COLOR CONVERSION
+// ============================================================
+//
+// Converts a hex color into RGB values so we can mathematically
+// blend between our light and dark theme colors.
+//
+
+function hexToRgb(hex) {
+
+  const cleanHex =
+    hex.replace("#", "");
+
+  return {
+
+    r: parseInt(
+      cleanHex.substring(0, 2),
+      16
+    ),
+
+    g: parseInt(
+      cleanHex.substring(2, 4),
+      16
+    ),
+
+    b: parseInt(
+      cleanHex.substring(4, 6),
+      16
+    )
+
+  };
+
+}
 
 
-const exploredMediumStyle = {
-  color: "#536b4e",
-  weight: 1.3,
-  fillColor: "#78936f",
-  fillOpacity: 0.82
-};
+// ============================================================
+// COLOR BLENDING
+// ============================================================
+//
+// Takes two colors and returns a color somewhere between them.
+//
+// intensity = 0 → completely light
+// intensity = 1 → completely dark
+//
+
+function blendColors(
+  lightColor,
+  darkColor,
+  intensity
+) {
+
+  const light =
+    hexToRgb(lightColor);
+
+  const dark =
+    hexToRgb(darkColor);
+
+  const amount =
+    Math.max(
+      0,
+      Math.min(1, intensity)
+    );
+
+  const r =
+    Math.round(
+      light.r +
+      (dark.r - light.r) * amount
+    );
+
+  const g =
+    Math.round(
+      light.g +
+      (dark.g - light.g) * amount
+    );
+
+  const b =
+    Math.round(
+      light.b +
+      (dark.b - light.b) * amount
+    );
+
+  return `rgb(${r}, ${g}, ${b})`;
+
+}
 
 
-const exploredDeepStyle = {
-  color: "#40543c",
-  weight: 1.5,
-  fillColor: "#536b4e",
-  fillOpacity: 0.88
-};
+// ============================================================
+// HEAT MAP COLOR
+// ============================================================
+//
+// More foods from a country = deeper version of our theme color.
+//
+
+function getHeatMapColor(intensity) {
+
+  return blendColors(
+    heatMapTheme.light,
+    heatMapTheme.dark,
+    intensity
+  );
+
+}
 
 
-// Hover styles
+// ============================================================
+// GET COUNTRY FOOD COUNT
+// ============================================================
 
-const hoverExploredStyle = {
-  color: "#8b5e3c",
-  weight: 2.5,
-  fillColor: "#d8b894",
-  fillOpacity: 0.95
-};
+function getCountryFoodCount(countryCode) {
 
+  return experiencesForCountry(
+    countryCode
+  ).length;
+
+}
+
+
+// ============================================================
+// GET MAXIMUM FOOD COUNT
+// ============================================================
+//
+// This automatically adapts the color scale as our journal grows.
+//
+
+function getMaximumFoodCount() {
+
+  return Math.max(
+    1,
+    ...experiences.map(
+      experience =>
+        getCountryFoodCount(
+          experience.countryCode
+        )
+    )
+  );
+
+}
+
+
+// ============================================================
+// GET COUNTRY INTENSITY
+// ============================================================
+//
+// A logarithmic scale keeps the map useful when one country
+// has many more foods than the others.
+//
+
+function getCountryIntensity(
+  foodCount,
+  maximumFoodCount
+) {
+
+  if (foodCount <= 0) {
+
+    return 0;
+
+  }
+
+  if (maximumFoodCount <= 1) {
+
+    return 1;
+
+  }
+
+  return (
+    Math.log1p(foodCount) /
+    Math.log1p(maximumFoodCount)
+  );
+
+}
+
+
+// ============================================================
+// GET EXPLORED COUNTRY STYLE
+// ============================================================
+
+function getExploredStyle(
+  foodCount,
+  maximumFoodCount
+) {
+
+  const intensity =
+    getCountryIntensity(
+      foodCount,
+      maximumFoodCount
+    );
+
+  return {
+
+    color:
+      heatMapTheme.border,
+
+    weight:
+      intensity > 0.7
+        ? 1.4
+        : 1.1,
+
+    fillColor:
+      getHeatMapColor(
+        intensity
+      ),
+
+    fillOpacity: 0.82
+
+  };
+
+}
+
+function getCountryStyle(foodCount, maximumFoodCount){
+  return foodCount > 0 ? getExploredStyle(foodCount, maximumFoodCount) : defaultStyle;
+}
+
+
+// ============================================================
+// GET HOVER STYLE
+// ============================================================
+//
+// Hovering emphasizes the country while preserving its heat-map
+// color so the color still communicates food exploration.
+//
+
+function getHoverExploredStyle(
+  foodCount,
+  maximumFoodCount
+) {
+
+  const intensity =
+    getCountryIntensity(
+      foodCount,
+      maximumFoodCount
+    );
+
+  return {
+
+    color:
+      heatMapTheme.hoverBorder,
+
+    weight: 2.5,
+
+    fillColor:
+      getHeatMapColor(
+        intensity
+      ),
+
+    fillOpacity: 1
+
+  };
+
+}
+
+
+// ============================================================
+// UNEXPLORED COUNTRY HOVER STYLE
+// ============================================================
 
 const hoverUnexploredStyle = {
-  color: "#8b5e3c",
+
+  color:
+    heatMapTheme.hoverBorder,
+
   weight: 1.5,
-  fillColor: "#e5e0d6",
-  fillOpacity: 0.78
+
+  fillColor:
+    heatMapTheme.unexplored,
+
+  fillOpacity: 0.75
+
 };
 
 
@@ -312,7 +579,6 @@ const hoverUnexploredStyle = {
 // ============================================================
 
 const countryLayers = new Map();
-
 
 // ============================================================
 // NORMALIZE COUNTRY CODE
@@ -449,38 +715,6 @@ function experiencesForCountry(countryCode) {
 
 
 // ============================================================
-// GET STYLE BASED ON FOOD COUNT
-// ============================================================
-
-function getCountryStyle(foodCount) {
-
-  if (foodCount === 0) {
-
-    return defaultStyle;
-
-  }
-
-
-  if (foodCount === 1) {
-
-    return exploredLightStyle;
-
-  }
-
-
-  if (foodCount === 2) {
-
-    return exploredMediumStyle;
-
-  }
-
-
-  return exploredDeepStyle;
-
-}
-
-
-// ============================================================
 // LOAD WORLD MAP
 // ============================================================
 
@@ -516,230 +750,126 @@ fetch(
     // --------------------------------------------------------
     // CREATE COUNTRY LAYERS
     // --------------------------------------------------------
-
     L.geoJSON(
-
       data,
-
       {
-
         // ====================================================
         // COUNTRY STYLE
         // ====================================================
-
         style: feature => {
-
-          const countryCode =
-            getCountryCode(
-              feature
-            );
-
-
-          const foods =
-            experiencesForCountry(
-              countryCode
-            );
-
+          const countryCode = getCountryCode(feature);
+          const foods = experiencesForCountry(countryCode);
 
           return getCountryStyle(
-            foods.length
+            foods.length,
+            maximumFoodCount
           );
-
         },
-
 
         // ====================================================
         // COUNTRY EVENTS
         // ====================================================
-
-        onEachFeature: (
-          feature,
-          layer
-        ) => {
-
-          const countryCode =
-            getCountryCode(
-              feature
-            );
-
-
-          const countryName =
-            getCountryName(
-              feature
-            );
-
-
-          const foods =
-            experiencesForCountry(
-              countryCode
-            );
-
-
-          const foodCount =
-            foods.length;
-
+        onEachFeature: (feature, layer) => {
+          const countryCode = getCountryCode(feature);
+          const countryName = getCountryName(feature);
+          const foods = experiencesForCountry(countryCode);
+          const foodCount = foods.length;
 
           // --------------------------------------------------
           // SAVE COUNTRY LAYER
           // --------------------------------------------------
-
           if (countryCode) {
-
-            countryLayers.set(
-              countryCode,
-              layer
-            );
-
+            countryLayers.set(countryCode, layer);
           }
-
 
           // ==================================================
           // HOVER TOOLTIP
           // ==================================================
-
           if (foodCount > 0) {
-
-            const foodLabel =
-              foodCount === 1
-                ? "food explored"
-                : "foods explored";
-
-
-            const foodNames =
-              foods
-                .map(
-                  food => food.dish
-                )
-                .join(" · ");
-
+            const foodLabel = foodCount === 1 ? "food explored": "foods explored";
+            const foodNames = foods.map(food => food.dish).join(" · ");
 
             layer.bindTooltip(
-
               `
                 <div class="country-tooltip-content">
-
-                  <strong>
-                    ${countryName}
-                  </strong>
-
+                  <strong>${countryName}</strong>
                   <span class="tooltip-count">
                     ${foodCount}
                     ${foodLabel}
                   </span>
-
                   <span class="tooltip-foods">
                     ${foodNames}
                   </span>
-
                 </div>
               `,
-
               {
                 sticky: true,
-                className:
-                  "country-tooltip"
+                className: "country-tooltip"
               }
-
             );
-
           } else {
-
             layer.bindTooltip(
-
               `
                 <div class="country-tooltip-content">
-
                   <strong>
                     ${countryName}
                   </strong>
-
                   <span class="tooltip-unexplored">
                     Not explored yet
                   </span>
-
                 </div>
               `,
-
               {
                 sticky: true,
-                className:
-                  "country-tooltip"
+                className: "country-tooltip"
               }
-
             );
-
           }
-
 
           // ==================================================
           // MOUSE OVER
           // ==================================================
-
-          layer.on(
-            "mouseover",
-            event => {
-
-              event.target.setStyle(
-                hoverExploredStyle
-              );
-
-              event.target.bringToFront();
-
+          layer.on("mouseover", event => {
+            if (foodCount > 0) {
+            // Dynamic calculation using hover function
+              const hoverStyle = getHoverExploredStyle(foodCount, maximumFoodCount);
+              event.target.setStyle(hoverStyle);
+            } else {
+              // Fallback to static unexplored hover styling
+                event.target.setStyle(hoverUnexploredStyle);
+              }
+              // Layer sorting check for clean rendering across browsers
+              if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge){
+                event.target.bringToFront();
+              }
             }
           );
-
 
           // ==================================================
           // MOUSE OUT
           // ==================================================
-
-          layer.on(
-            "mouseout",
-            event => {
-
-              event.target.setStyle(
-                getCountryStyle(
-                  foodCount
-                )
-              );
-
+          layer.on("mouseout", event => {
+            if (foodCount > 0){
+              styleTile = getCountryStyle(foodCount, maximumFoodCount);
+              event.target.setStyle(styleTile);
+            } else{
+              event.target.setStyle(defaultStyle);
             }
-          );
-
+          });
 
           // ==================================================
           // CLICK
           // ==================================================
-
-          layer.on(
-            "click",
-            () => {
-
+          layer.on("click", () => {
               if (foodCount > 0) {
-
-                showCountryJournal(
-                  countryName,
-                  countryCode
-                );
-
+                showCountryJournal(countryName, countryCode);
               } else {
-
-                showUnexploredCountry(
-                  countryName
-                );
-
+                showUnexploredCountry(countryName);
               }
-
-            }
-          );
-
+           });
         }
-
       }
-
     ).addTo(map);
-
-
     // --------------------------------------------------------
     // DEBUG
     // --------------------------------------------------------
@@ -767,39 +897,13 @@ fetch(
   // ========================================================
   // MAP ERROR
   // ========================================================
-
   .catch(error => {
+    console.error("Could not load world map:", error);
 
-    console.error(
-      "Could not load world map:",
-      error
+    document.getElementById("map").insertAdjacentHTML(
+      "beforeend",
+      `<div style="position:absolute; z-index:1000; top:20px; left:20px; padding:20px; background:white; border radius:10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">The country map data could not be loaded.</div>`
     );
-
-
-    document
-      .getElementById("map")
-      .insertAdjacentHTML(
-
-        "beforeend",
-
-        `
-          <div
-            style="
-              padding:20px;
-              background:white;
-              position:absolute;
-              z-index:1000;
-              top:20px;
-              left:20px;
-              border-radius:10px;
-            "
-          >
-            The country map data could not be loaded.
-          </div>
-        `
-
-      );
-
   });
 
 // ============================================================
@@ -1391,4 +1495,3 @@ document.getElementById(
   </div>
 
 `;
-
