@@ -255,6 +255,9 @@ L.tileLayer(
 //
 //Our max food value should be the max value of foods per country. 
 
+// ============================================================
+// GET MAXIMUM FOOD COUNT
+// ============================================================
 let maximumFoodCount = getMaximumFoodCount(experiences);
 
 function getMaximumFoodCount(experiences) {
@@ -419,29 +422,6 @@ function getCountryFoodCount(countryCode) {
   ).length;
 
 }
-
-
-// ============================================================
-// GET MAXIMUM FOOD COUNT
-// ============================================================
-//
-// This automatically adapts the color scale as our journal grows.
-//
-
-function getMaximumFoodCount() {
-
-  return Math.max(
-    1,
-    ...experiences.map(
-      experience =>
-        getCountryFoodCount(
-          experience.countryCode
-        )
-    )
-  );
-
-}
-
 
 // ============================================================
 // GET COUNTRY INTENSITY
@@ -759,11 +739,12 @@ fetch(
         style: feature => {
           const countryCode = getCountryCode(feature);
           const foods = experiencesForCountry(countryCode);
-
-          return getCountryStyle(
-            foods.length,
-            maximumFoodCount
-          );
+          const maximumFoodCount = getMaximumFoodCount()
+          if (foods.length > 0) {
+            return getExploredStyle(foods.length, maximumFoodCount);
+          } else {
+            return defaultStyle;
+          }
         },
 
         // ====================================================
@@ -832,6 +813,7 @@ fetch(
           layer.on("mouseover", event => {
             if (foodCount > 0) {
             // Dynamic calculation using hover function
+              const maximumFoodCount = getMaximumFoodCount();
               const hoverStyle = getHoverExploredStyle(foodCount, maximumFoodCount);
               event.target.setStyle(hoverStyle);
             } else {

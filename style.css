@@ -346,3 +346,40 @@ main {
     padding: 30px 22px;
   }
 }
+
+.map-tools {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-shrink: 0;
+}
+
+.heat-scale {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.heat-gradient {
+  width: 82px;
+  height: 9px;
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      to right,
+      #dce7d8,
+      #b5c9ae,
+      #78936f,
+      #536b4e,
+      #375c30
+    );
+
+  border: 1px solid rgba(46, 48, 43, 0.12);
+}
