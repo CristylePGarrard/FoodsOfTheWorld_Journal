@@ -245,36 +245,65 @@ L.tileLayer(
 // ============================================================
 // MAP COLORS
 // ============================================================
+//
+// The map gets darker as we explore more foods from a country.
+//
+// 0 foods  = neutral
+// 1 food   = light green
+// 2 foods  = medium green
+// 3+ foods = deep green
+//
+// This means the map will continue to evolve automatically
+// as we add more food experiences.
+//
 
 const defaultStyle = {
   color: "#aeb8b2",
   weight: 0.8,
-  fillColor: "#cbd2ce",
-  fillOpacity: 0.55
+  fillColor: "#d5dbd7",
+  fillOpacity: 0.58
 };
 
 
-const exploredStyle = {
+const exploredLightStyle = {
+  color: "#6f8768",
+  weight: 1.1,
+  fillColor: "#b8c9b1",
+  fillOpacity: 0.78
+};
+
+
+const exploredMediumStyle = {
   color: "#536b4e",
-  weight: 1.2,
+  weight: 1.3,
   fillColor: "#78936f",
-  fillOpacity: 0.72
+  fillOpacity: 0.82
 };
 
+
+const exploredDeepStyle = {
+  color: "#40543c",
+  weight: 1.5,
+  fillColor: "#536b4e",
+  fillOpacity: 0.88
+};
+
+
+// Hover styles
 
 const hoverExploredStyle = {
   color: "#8b5e3c",
-  weight: 2,
+  weight: 2.5,
   fillColor: "#d8b894",
-  fillOpacity: 0.9
+  fillOpacity: 0.95
 };
 
 
 const hoverUnexploredStyle = {
   color: "#8b5e3c",
   weight: 1.5,
-  fillColor: "#e1ddd3",
-  fillOpacity: 0.75
+  fillColor: "#e5e0d6",
+  fillOpacity: 0.78
 };
 
 
@@ -288,17 +317,6 @@ const countryLayers = new Map();
 // ============================================================
 // NORMALIZE COUNTRY CODE
 // ============================================================
-//
-// Our food data uses:
-//
-// IND
-// VNM
-// SLV
-// JPN
-// MEX
-//
-// Make sure everything is compared consistently.
-//
 
 function normalizeCountryCode(code) {
 
@@ -316,23 +334,6 @@ function normalizeCountryCode(code) {
 // ============================================================
 // GET COUNTRY CODE FROM GEOJSON
 // ============================================================
-//
-// IMPORTANT:
-//
-// The GeoJSON dataset we are using currently stores the
-// ISO-3 country code as:
-//
-// ISO3166-1-Alpha-3
-//
-// This is why the old code using:
-//
-// feature.properties.ISO_A3
-//
-// was not finding our countries.
-//
-// We support both the current format and several common
-// alternatives so this code is more robust.
-//
 
 function getCountryCode(feature) {
 
@@ -368,9 +369,6 @@ function getCountryCode(feature) {
     const normalizedCode =
       normalizeCountryCode(code);
 
-
-    // -99 means the GeoJSON does not have
-    // an assigned ISO code for that feature.
 
     if (
       normalizedCode &&
@@ -451,6 +449,38 @@ function experiencesForCountry(countryCode) {
 
 
 // ============================================================
+// GET STYLE BASED ON FOOD COUNT
+// ============================================================
+
+function getCountryStyle(foodCount) {
+
+  if (foodCount === 0) {
+
+    return defaultStyle;
+
+  }
+
+
+  if (foodCount === 1) {
+
+    return exploredLightStyle;
+
+  }
+
+
+  if (foodCount === 2) {
+
+    return exploredMediumStyle;
+
+  }
+
+
+  return exploredDeepStyle;
+
+}
+
+
+// ============================================================
 // LOAD WORLD MAP
 // ============================================================
 
@@ -477,35 +507,9 @@ fetch(
   .then(data => {
 
     console.log(
-      "World map loaded successfully."
-    );
-
-
-    console.log(
-      "Countries in GeoJSON:",
-      data.features.length
-    );
-
-
-    // --------------------------------------------------------
-    // SHOW OUR FOOD DATA IN THE CONSOLE
-    // --------------------------------------------------------
-
-    console.log(
-      "Our food journey:"
-    );
-
-
-    experiences.forEach(
-      experience => {
-
-        console.log(
-          experience.dish,
-          "→",
-          experience.countryCode
-        );
-
-      }
+      "World map loaded:",
+      data.features.length,
+      "countries"
     );
 
 
@@ -537,19 +541,9 @@ fetch(
             );
 
 
-          // Countries with food experiences
-          // are highlighted.
-
-          if (foods.length > 0) {
-
-            return exploredStyle;
-
-          }
-
-
-          // Everything else stays neutral.
-
-          return defaultStyle;
+          return getCountryStyle(
+            foods.length
+          );
 
         },
 
@@ -581,8 +575,12 @@ fetch(
             );
 
 
+          const foodCount =
+            foods.length;
+
+
           // --------------------------------------------------
-          // SAVE THE COUNTRY LAYER
+          // SAVE COUNTRY LAYER
           // --------------------------------------------------
 
           if (countryCode) {
@@ -595,44 +593,11 @@ fetch(
           }
 
 
-          // --------------------------------------------------
-          // DEBUG INFORMATION
-          // --------------------------------------------------
-          //
-          // This lets us see exactly what the map is doing.
-          //
-
-          if (
-            [
-              "IND",
-              "VNM",
-              "SLV",
-              "JPN",
-              "MEX"
-            ].includes(countryCode)
-          ) {
-
-            console.log(
-              "FOOD COUNTRY FOUND:",
-              countryName,
-              countryCode,
-              foods.map(
-                food => food.dish
-              )
-            );
-
-          }
-
-
           // ==================================================
-          // HOVER TEXT
+          // HOVER TOOLTIP
           // ==================================================
 
-          if (foods.length > 0) {
-
-            const foodCount =
-              foods.length;
-
+          if (foodCount > 0) {
 
             const foodLabel =
               foodCount === 1
@@ -640,17 +605,33 @@ fetch(
                 : "foods explored";
 
 
+            const foodNames =
+              foods
+                .map(
+                  food => food.dish
+                )
+                .join(" · ");
+
+
             layer.bindTooltip(
 
               `
-                <strong>
-                  ${countryName}
-                </strong>
+                <div class="country-tooltip-content">
 
-                <br>
+                  <strong>
+                    ${countryName}
+                  </strong>
 
-                ${foodCount}
-                ${foodLabel}
+                  <span class="tooltip-count">
+                    ${foodCount}
+                    ${foodLabel}
+                  </span>
+
+                  <span class="tooltip-foods">
+                    ${foodNames}
+                  </span>
+
+                </div>
               `,
 
               {
@@ -665,7 +646,19 @@ fetch(
 
             layer.bindTooltip(
 
-              countryName,
+              `
+                <div class="country-tooltip-content">
+
+                  <strong>
+                    ${countryName}
+                  </strong>
+
+                  <span class="tooltip-unexplored">
+                    Not explored yet
+                  </span>
+
+                </div>
+              `,
 
               {
                 sticky: true,
@@ -686,19 +679,11 @@ fetch(
             "mouseover",
             event => {
 
-              if (foods.length > 0) {
+              event.target.setStyle(
+                hoverExploredStyle
+              );
 
-                event.target.setStyle(
-                  hoverExploredStyle
-                );
-
-              } else {
-
-                event.target.setStyle(
-                  hoverUnexploredStyle
-                );
-
-              }
+              event.target.bringToFront();
 
             }
           );
@@ -712,19 +697,11 @@ fetch(
             "mouseout",
             event => {
 
-              if (foods.length > 0) {
-
-                event.target.setStyle(
-                  exploredStyle
-                );
-
-              } else {
-
-                event.target.setStyle(
-                  defaultStyle
-                );
-
-              }
+              event.target.setStyle(
+                getCountryStyle(
+                  foodCount
+                )
+              );
 
             }
           );
@@ -738,7 +715,7 @@ fetch(
             "click",
             () => {
 
-              if (foods.length > 0) {
+              if (foodCount > 0) {
 
                 showCountryJournal(
                   countryName,
@@ -761,6 +738,28 @@ fetch(
       }
 
     ).addTo(map);
+
+
+    // --------------------------------------------------------
+    // DEBUG
+    // --------------------------------------------------------
+
+    console.log(
+      "Countries represented in our food journey:"
+    );
+
+
+    experiences.forEach(
+      experience => {
+
+        console.log(
+          experience.dish,
+          "→",
+          experience.countryCode
+        );
+
+      }
+    );
 
   })
 
@@ -802,7 +801,6 @@ fetch(
       );
 
   });
-
 
 // ============================================================
 // COUNTRY JOURNAL
