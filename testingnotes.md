@@ -37,6 +37,37 @@ Make the field in the form only allow numbers in the acceptable range.
 
 ---
 ---
+#### ```food.foodDate``` is a future date that hasn't happened yet. 
+
+added the food to the map and has a journal entry with the future date
+
+##### FIX
+Maybe make to form limit date options to once within an acceptable range? Or ask if want to add with a future date?
+
+---
+---
+#### Put a character other than y/n in ```food.cristyleHaveAgain``` field. 
+
+data loads and opens the journal entry. It marked it as 'Probably not' which is the response for if it's not true or false. 
+
+##### FIX
+This is what we want if it's doing it right. I worried a non true/false value would break things but defaulting to the third options works for me. 
+
+---
+---
+#### Put a 0 in the ```food.cristylesRating``` field 
+
+journal card can't load
+
+```javascript
+RangeError: String.prototype.repeat argument must be greater than or equal to 0 and not be Infinity
+```
+
+##### FIX
+give only the 1-5 options for the field in the form. 
+
+---
+---
 #### *Describe test 
 
 *What happened*
