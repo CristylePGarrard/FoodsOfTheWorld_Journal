@@ -12,6 +12,20 @@ RangeError: String.prototype.repeat argument must be greater than or equal to 0 
 Give only acceptable options in the form that will populate the spreadsheet. 
 
 ---
+#### Empty ```food.cristylesRating``` and ```food.cristyleHaveAgain``` fields
+
+No issues marked as probably not like it should. 
+---
+---
+#### *Describe test 
+
+*What happened*
+
+##### FIX
+*what was done or should be done to fix?
+
+---
+---
 #### *Describe test 
 
 *What happened*
