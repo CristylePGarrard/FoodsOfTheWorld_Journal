@@ -1077,10 +1077,10 @@ function openJournal(id) {
           </strong>
         ${
           item.restaurant.cristyleGoBack === true
-            ? "Yes ❤️"
-            : item.restaurant.cristyleGoBack === false
-              ? "No"
-              : "Not sure yet"
+            ? "Yes! ❤️"
+            : item.restaurant.cristyleGoBack=== false
+              ? "No 🙅🏽"
+              : "Maybe 🤔"
           }
         </p>
         <p>
@@ -1089,10 +1089,10 @@ function openJournal(id) {
         </strong>
         ${
           item.person1.haveAgain === true
-            ? "Absolutely"
+            ? "Absolutely!! 😋"
             : item.person1.haveAgain === false
-              ? "Nope!"
-              : "Not sure yet"
+              ? "Nope! 🤢"
+              : "Probably not 🤷🏽"
         }
       </p>
       </div>
