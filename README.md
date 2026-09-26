@@ -1,5 +1,5 @@
 # catFood
-A site for my partner and I to record our food experiences and try as many foods from around the world as we can. 
+A site for my partner and I to record our food experiences and work towards our goal of trying foods from all over the world 😃😋 
 ---
 ## Run locally
 
