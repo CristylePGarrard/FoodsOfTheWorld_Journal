@@ -1253,10 +1253,6 @@ document
     }
   );
 
-
-// ============================================================
-// STATISTICS
-// ============================================================
 // ============================================================
 // STATISTICS
 // ============================================================
@@ -1297,10 +1293,15 @@ function updateStatistics() {
       <span class="stat-label">Foods Tried</span>
     </div>
 
-    <div class="stat">
-      <span class="stat-number">${uniqueCountries.size}</span>
-      <span class="stat-label">Countries</span>
-    </div>
+  <div
+    class="stat stat-clickable"
+    id="countriesStat"
+    role="button"
+    tabindex="0"
+  >
+    <span class="stat-number">${uniqueCountries.size}</span>
+    <span class="stat-label">Countries</span>
+  </div>
 
     <div class="stat">
       <span class="stat-number">${uniqueRegions.size}</span>
@@ -1316,6 +1317,9 @@ function updateStatistics() {
   document
     .getElementById("foodsStat")
     .addEventListener("click", openFoodExplorer);
+  document
+    .getElementById("countriesStat")
+    .addEventListener("click", openCountryExplorer);
 }
 // ============================================================
 // FOOD EXPLORER
@@ -1347,7 +1351,7 @@ function centerMapOnCountry(countryCode) {
 }
 
 function openFoodExplorer() {
-
+  
   const sortedExperiences =
     [...experiences].sort(
       (a, b) =>
@@ -1367,7 +1371,6 @@ function openFoodExplorer() {
             </span>
 
             <span class="explorer-item-details">
-              ${experience.cuisine}
               ·
               ${experience.region}
             </span>
@@ -1405,6 +1408,7 @@ function openFoodExplorer() {
   `;
 
   openModal();
+
   document
     .querySelectorAll(".explorer-item")
     .forEach(item => {
@@ -1440,6 +1444,123 @@ function openFoodExplorer() {
         );
       });
     });
+}
+// ============================================================
+// COUNTRY EXPLORER
+// ============================================================
+
+function openCountryExplorer() {
+
+  const countryMap = new Map();
+
+  experiences.forEach(experience => {
+
+    const countryCode =
+      normalizeCountryCode(
+        experience.countryCode
+      );
+
+    if (!countryCode) {
+      return;
+    }
+
+  if (!countryMap.has(countryCode)) {
+    const layer =
+      countryLayers.get(countryCode);
+
+    countryMap.set(countryCode, {
+      code: countryCode,
+      name: layer
+        ? getCountryName(layer.feature)
+        : countryCode,
+      foodCount: 0
+    });
+  }
+
+    countryMap.get(countryCode).foodCount++;
+  });
+
+  const countries =
+    [...countryMap.values()]
+      .sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+
+  const countryList =
+    countries
+      .map(country => `
+        <button
+          class="explorer-item"
+          data-country-code="${country.code}"
+        >
+          <span class="explorer-item-name">
+            ${country.name}
+          </span>
+
+          <span class="explorer-item-details">
+            ${country.foodCount}
+            ${country.foodCount === 1 ? "food" : "foods"}
+          </span>
+        </button>
+      `)
+      .join("");
+
+  document.getElementById(
+    "modalContent"
+  ).innerHTML = `
+
+    <div class="explorer">
+
+      <p class="entry-kicker">
+        OUR FOOD JOURNEY
+      </p>
+
+      <h2>
+        🌎 Countries We've Explored
+      </h2>
+
+      <p class="explorer-intro">
+        We've explored
+        ${countries.length}
+        countries so far.
+      </p>
+
+      <div class="explorer-list">
+        ${countryList}
+      </div>
+
+    </div>
+
+  `;
+
+  openModal();
+
+  document
+    .querySelectorAll(".explorer-item")
+    .forEach(item => {
+
+      item.addEventListener(
+        "click",
+        () => {
+
+          const countryCode =
+            item.dataset.countryCode;
+
+          console.log(
+            "Selected country:",
+            countryCode
+          );
+
+          closeModal();
+
+          centerMapOnCountry(
+            countryCode
+          );
+        }
+      );
+
+    });
+
 }
 // ============================================================
 
