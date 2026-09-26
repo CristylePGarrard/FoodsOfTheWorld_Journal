@@ -24,6 +24,28 @@ No issues. Both were marked as maybe or not sure as expected.
 
 ---
 ---
+#### Putting a number outside of the 1-5 range in ```food.cristylesRating``` or ```food.partnersRating``` fields.
+
+Journal page doesn't open up
+
+```javascript
+RangeError: String.prototype.repeat argument must be greater than or equal to 0 and not be Infinity
+```
+
+##### FIX
+Make the field in the form only allow numbers in the acceptable range. 
+
+---
+---
+#### *Describe test 
+
+*What happened*
+
+##### FIX
+*what was done or should be done to fix?
+
+---
+---
 #### *Describe test 
 
 *What happened*
