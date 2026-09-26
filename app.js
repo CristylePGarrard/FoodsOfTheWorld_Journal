@@ -1031,76 +1031,100 @@ function openJournal(id) {
 
     <section class="restaurant-box">
 
-      <p class="entry-kicker">
-        WHERE WE EXPERIENCED IT
-      </p>
-
-      <h3>
-        📍 ${item.restaurant.name}
-      </h3>
-
-      <p>
-        ${item.restaurant.address}
-      </p>
-
-      <p>
-        ${item.restaurant.city}
-      </p>
-
-      <p>
-        ${item.restaurant.phone}
-      </p>
-
-      <p>
-
+    <p class="entry-kicker">
+      WHERE WE EXPERIENCED IT
+    </p>
+    <h3>
+      📍 ${item.restaurant.name}
+    </h3>
+    <p>
+      ${item.restaurant.address}
+    </p>
+    <p>
+      ${item.restaurant.city}
+    </p>
+    <p>
+      ${item.restaurant.phone}
+    </p>
+    ${
+      item.restaurant.website
+        ? `
+          <p>
+            <a
+              href="${item.restaurant.website}"
+              target="_blank"
+              rel="noopener"
+            >
+              Restaurant website ↗
+            </a>
+          </p>
+        `
+        : ""
+    }
+    
+    <p>
+      <strong>
+        Rating
+      </strong>
+      ${stars(item.restaurant.combinedRating)}
+      ${item.restaurant.combinedRating ?? "Not rated"}
+    </p>
+    <section class="note">
+      <div class="review-grid " style="margin-top:20px">
+        <p>
+          <strong>
+            Would Cris go back?
+          </strong>
         ${
-          item.restaurant.website
-            ? `
-              <a
-                href="${item.restaurant.website}"
-                target="_blank"
-                rel="noopener"
-              >
-                Restaurant website ↗
-              </a>
-            `
-            : ""
-        }
-
-      </p>
-
-
-      <p>
-
-        <strong>
-          Would we go back?
-        </strong>
-
-        ${
-          item.goBack
+          item.restaurant.cristyleGoBack === true
             ? "Yes ❤️"
-            : "Not sure yet"
-        }
-
-      </p>
-
-
-      <p>
-
+            : item.restaurant.cristyleGoBack === false
+              ? "No"
+              : "Not sure yet"
+          }
+        </p>
+        <p>
         <strong>
-          Would we have it again?
+          Would Cris have it again?
         </strong>
-
         ${
-          item.eatAgain
+          item.person1.haveAgain === true
             ? "Absolutely"
-            : "Probably not"
+            : item.person1.haveAgain === false
+              ? "Nope!"
+              : "Not sure yet"
         }
-
       </p>
-
+      </div>
     </section>
-
+    <section class="note" style="margin-top:20px">
+      <div class="review-grid ">
+        <p style="padding:10px">
+          <strong>
+            Would Danni go back?
+          </strong>
+            ${
+              item.restaurant.danniGoBack === true
+                ? "Yes ❤️"
+                : item.restaurant.danniGoBack === false
+                  ? "No"
+                  : "Not sure yet"
+            }
+        </p>
+        <p>
+          <strong>
+            Would Danni have it again?
+          </strong>
+          ${
+            item.person2.haveAgain === true
+              ? "Absolutely"
+              : item.person2.haveAgain === false
+                ? "Probably not"
+                : "Not sure yet"
+            }
+        </p>
+      </div>
+    </section>
   `;
 
 
@@ -1233,55 +1257,57 @@ document
 // ============================================================
 // STATISTICS
 // ============================================================
-
-const uniqueCountries =
-  new Set(
-    experiences.map(
-      experience =>
-        experience.countryCode
-    )
-  );
-
-
-const uniqueRegions =
-  new Set(
-    experiences.map(
-      experience =>
-        experience.region
-    )
-  );
-
-
-const uniqueCuisines =
-  new Set(
-    experiences.map(
-      experience =>
-        experience.cuisine
-    )
-  );
-
-
-document.getElementById("stats").innerHTML = `
-  <div class="stat">
-    <span class="stat-number">${experiences.length}</span>
-    <span class="stat-label">Foods Tried</span>
-  </div>
-  <div class="stat">
-    <span class="stat-number">${uniqueCountries.size}</span>
-    <span class="stat-label">Countries</span>
-  </div>
-  <div class="stat">
-    <span class="stat-number">${uniqueRegions.size}</span>
-    <span class="stat-label">Regions</span>
-  </div>
-  <div class="stat">
-    <span class="stat-number">${uniqueCuisines.size}</span>
-    <span class="stat-label">Cuisines</span>
-  </div>
-`;
-
 // ============================================================
-// START APPLICATION
+// STATISTICS
+// ============================================================
+
+function updateStatistics() {
+  const uniqueCountries =
+    new Set(
+      experiences.map(
+        experience =>
+          experience.countryCode
+      )
+    );
+
+  const uniqueRegions =
+    new Set(
+      experiences.map(
+        experience =>
+          experience.region
+      )
+    );
+
+  const uniqueCuisines =
+    new Set(
+      experiences.map(
+        experience =>
+          experience.cuisine
+      )
+    );
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat">
+      <span class="stat-number">${experiences.length}</span>
+      <span class="stat-label">Foods Tried</span>
+    </div>
+
+    <div class="stat">
+      <span class="stat-number">${uniqueCountries.size}</span>
+      <span class="stat-label">Countries</span>
+    </div>
+
+    <div class="stat">
+      <span class="stat-number">${uniqueRegions.size}</span>
+      <span class="stat-label">Regions</span>
+    </div>
+
+    <div class="stat">
+      <span class="stat-number">${uniqueCuisines.size}</span>
+      <span class="stat-label">Cuisines</span>
+    </div>
+  `;
+}
 // ============================================================
 
 async function initializeApp() {
@@ -1294,6 +1320,7 @@ async function initializeApp() {
     "Maximum food count:",
     maximumFoodCount
   );
+  updateStatistics();
 
   await loadWorldMap();
 }
