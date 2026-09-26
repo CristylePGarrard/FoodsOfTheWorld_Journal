@@ -18,6 +18,12 @@ No issues marked as probably not like it should.
 
 ---
 ---
+#### Empty ```location.crisGoBack``` and ```location.partnerGoBack``` fields
+
+No issues. Both were marked as maybe or not sure as expected. 
+
+---
+---
 #### *Describe test 
 
 *What happened*
