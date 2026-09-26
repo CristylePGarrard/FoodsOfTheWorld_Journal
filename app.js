@@ -1287,7 +1287,12 @@ function updateStatistics() {
     );
 
   document.getElementById("stats").innerHTML = `
-    <div class="stat">
+    <div
+      class="stat stat-clickable"
+      id="foodsStat"
+      role="button"
+      tabindex="0"
+    >
       <span class="stat-number">${experiences.length}</span>
       <span class="stat-label">Foods Tried</span>
     </div>
@@ -1307,6 +1312,134 @@ function updateStatistics() {
       <span class="stat-label">Cuisines</span>
     </div>
   `;
+
+  document
+    .getElementById("foodsStat")
+    .addEventListener("click", openFoodExplorer);
+}
+// ============================================================
+// FOOD EXPLORER
+// ============================================================
+
+function centerMapOnCountry(countryCode) {
+
+  const normalizedCode =
+    normalizeCountryCode(countryCode);
+
+  const layer =
+    countryLayers.get(normalizedCode);
+
+  if (!layer) {
+    console.warn(
+      "Could not find map layer for:",
+      countryCode
+    );
+    return;
+  }
+
+  const bounds =
+    layer.getBounds();
+
+  map.fitBounds(bounds, {
+    padding: [40, 40],
+    maxZoom: 5
+  });
+}
+
+function openFoodExplorer() {
+
+  const sortedExperiences =
+    [...experiences].sort(
+      (a, b) =>
+        a.dish.localeCompare(b.dish)
+    );
+
+  const foodList =
+    sortedExperiences
+      .map(
+        experience => `
+          <button
+            class="explorer-item"
+            data-food-id="${experience.id}"
+          >
+            <span class="explorer-item-name">
+              ${experience.dish}
+            </span>
+
+            <span class="explorer-item-details">
+              ${experience.cuisine}
+              ·
+              ${experience.region}
+            </span>
+          </button>
+        `
+      )
+      .join("");
+
+  document.getElementById(
+    "modalContent"
+  ).innerHTML = `
+
+    <div class="explorer">
+
+      <p class="entry-kicker">
+        OUR FOOD JOURNEY
+      </p>
+
+      <h2>
+        🍜 Foods We've Tried
+      </h2>
+
+      <p class="explorer-intro">
+        We've explored
+        ${experiences.length}
+        different foods so far.
+      </p>
+
+      <div class="explorer-list">
+        ${foodList}
+      </div>
+
+    </div>
+
+  `;
+
+  openModal();
+  document
+    .querySelectorAll(".explorer-item")
+    .forEach(item => {
+      item.addEventListener("click", () => {
+
+        const foodId =
+          item.dataset.foodId;
+
+        const experience =
+          experiences.find(
+            experience =>
+              String(experience.id) ===
+              String(foodId)
+          );
+
+        if (!experience) {
+          console.error(
+            "Food not found:",
+            foodId
+          );
+          return;
+        }
+
+        console.log(
+          "Selected food:",
+          experience
+        );
+
+        closeModal();
+
+        centerMapOnCountry(
+          experience.countryCode
+        );
+      });
+    });
 }
 // ============================================================
 
