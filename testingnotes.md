@@ -68,13 +68,16 @@ give only the 1-5 options for the field in the form.
 
 ---
 ---
-#### *Describe test 
+#### Add same food from same restaurant but different date
 
-*What happened*
+None of the journal entries for El Salvador will open
+
+```javascript
+RangeError: String.prototype.repeat argument must be greater than or equal to 0 and not be Infinity
+```
 
 ##### FIX
-*what was done or should be done to fix?
-
+Open issue to investigate
 ---
 ---
 #### *Describe test 
