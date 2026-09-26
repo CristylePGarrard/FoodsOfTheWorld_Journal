@@ -8,219 +8,62 @@
 // Google Sheets → Google Apps Script → JavaScript
 // ============================================================
 
-const experiences = [
-  {
-    id: "001",
+// ============================================================
+// FOOD JOURNEY DATA
+//
+// Data comes from:
+// Google Sheets → Google Apps Script → JavaScript
+// ============================================================
 
-    // -------------------------
-    // FOOD
-    // -------------------------
-    dish: "Dosa",
-    cuisine: "Southern Indian",
-    foodOrigin: "Indian subcontinent",
-    region: "South Asia",
+const API_URL =
+  "https://script.google.com/macros/s/AKfycbwHMS0Vd9JsJqNhCLaJjCzt2xyON1W2fF9byYwpQBz9ficf03xSuUFElCF18UOA6mixnQ/exec";
 
-    // ISO country code used by the map
-    countryCode: "IND",
+let experiences = [];
 
-    date: "September 19, 2026",
 
-    // -------------------------
-    // OUR EXPERIENCE
-    // -------------------------
-    photo: "🍛",
+// ============================================================
+// LOAD FOOD DATA
+// ============================================================
 
-    person1: {
-      name: "Cristyle",
-      thoughts:
-        "Delicious! The lentil crepe was crispy and delicious and the sauces, YUM! I would absolutely order this again.",
-      rating: 5
-    },
+async function loadExperiences() {
 
-    person2: {
-      name: "Partner",
-      thoughts:
-        "Really enjoyed it",
-      rating: 5
-    },
+  try {
 
-    goBack: true,
-    eatAgain: true,
+    const response =
+      await fetch(API_URL);
 
-    // -------------------------
-    // RESTAURANT
-    // Secondary information
-    // -------------------------
-    restaurant: {
-      name: "Srivari Cafe",
-      city: "West Jordan, Utah",
-      address: "1617 W 9000 S West Jordan, UT",
-      phone: "(801) 996-3628",
-      website: ""
+    if (!response.ok) {
+      throw new Error(
+        `API request failed: ${response.status}`
+      );
     }
-  },
 
+    const data =
+      await response.json();
 
-  {
-    id: "002",
-
-    dish: "Banh mi",
-    cuisine: "Vietnamese",
-    foodOrigin: "Vietnam",
-    region: "Southeast Asia",
-    countryCode: "VNM",
-
-    date: "September 19, 2026",
-
-    photo: "🍣",
-
-    person1: {
-      name: "Cristyle",
-      thoughts:
-        "The sandwich was meh. But it was vegan meat so I don't think I can hold it against the Banh mi itself",
-      rating: 3
-    },
-
-    person2: {
-      name: "Partner",
-      thoughts:
-        "It was fine",
-      rating: 3.5
-    },
-
-    goBack: true,
-    eatAgain: false,
-
-    restaurant: {
-      name: "Vegan Bowl",
-      city: "West Jordan",
-      address: "8672 S Redwood Rd West Jordan, UT",
-      phone: "(801) 692-7237",
-      website: ""
+    if (!data.success) {
+      throw new Error(
+        data.error || "API returned an error."
+      );
     }
-  },
 
+    experiences =
+      data.experiences || [];
 
-  {
-    id: "003",
+    console.log(
+      `Loaded ${experiences.length} food experiences from Google Sheets.`
+    );
 
-    dish: "Pupusa",
-    cuisine: "Salvadoran",
-    foodOrigin: "El Salvador",
-    region: "El Salvador",
-    countryCode: "SLV",
+  } catch (error) {
 
-    date: "September 19, 2026",
+    console.error(
+      "Could not load food experiences:",
+      error
+    );
 
-    photo: "🌮",
-
-    person1: {
-      name: "Cristyle",
-      thoughts:
-        "Amazing! So incredibly delicious and with the curtido and tomato sauce on it, mmmm mmmm mmm! So delicious!!",
-      rating: 5
-    },
-
-    person2: {
-      name: "Partner",
-      thoughts:
-        "Loved the tacos and would definitely try more from this restaurant.",
-      rating: 4
-    },
-
-    goBack: true,
-    eatAgain: true,
-
-    restaurant: {
-      name: "Rincon Salvadoreno",
-      city: "Salt Lake City, Utah",
-      address: "3898 W 5535 S Salt Lake City, UT ",
-      phone: "(801) 955-9772",
-      website: "rinconsalvadoreno.com"
-    }
-  },
-
-
-  {
-    id: "004",
-
-    dish: "Ramen",
-    cuisine: "Japanese",
-    foodOrigin: "Japan",
-    region: "East Asia",
-    countryCode: "JPN",
-
-    date: "September 10, 2026",
-
-    photo: "🍜",
-
-    person1: {
-      name: "Cristyle",
-      thoughts:
-        "The broth was rich and comforting. I want to try more regional styles of ramen.",
-      rating: 4.5
-    },
-
-    person2: {
-      name: "Partner",
-      thoughts:
-        "Really good. I would definitely try another type of ramen.",
-      rating: 4
-    },
-
-    goBack: true,
-    eatAgain: true,
-
-    restaurant: {
-      name: "Sample Ramen Restaurant",
-      city: "Salt Lake City, Utah",
-      address: "789 Sample Street, Salt Lake City, UT",
-      phone: "(801) 555-0122",
-      website: "#"
-    }
-  },
-
-
-  {
-    id: "005",
-
-    dish: "Samosa",
-    cuisine: "Indian",
-    foodOrigin: "South Asia",
-    region: "South Asia",
-    countryCode: "IND",
-
-    date: "September 14, 2026",
-
-    photo: "🥟",
-
-    person1: {
-      name: "Cristyle",
-      thoughts:
-        "Crispy, spicy, and delicious. These were probably my favorite part of the meal.",
-      rating: 5
-    },
-
-    person2: {
-      name: "Partner",
-      thoughts:
-        "Very good. The filling had a lot of flavor.",
-      rating: 4.5
-    },
-
-    goBack: true,
-    eatAgain: true,
-
-    restaurant: {
-      name: "Bombay House",
-      city: "Salt Lake City, Utah",
-      address: "2731 E Parleys Way, Salt Lake City, UT",
-      phone: "(801) 581-0222",
-      website: "https://www.bombayhouse.com/"
-    }
   }
-];
 
+}
 
 // ============================================================
 // MAP
@@ -258,7 +101,7 @@ L.tileLayer(
 // ============================================================
 // GET MAXIMUM FOOD COUNT
 // ============================================================
-let maximumFoodCount = getMaximumFoodCount(experiences);
+let maximumFoodCount = 0;
 
 function getMaximumFoodCount(experiences) {
   // if array is empty return 0
@@ -693,32 +536,23 @@ function experiencesForCountry(countryCode) {
 
 }
 
-
 // ============================================================
 // LOAD WORLD MAP
 // ============================================================
 
-fetch(
-  "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
-)
-
-  .then(response => {
+async function loadWorldMap() {
+  try {
+    const response = await fetch(
+      "https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson"
+    );
 
     if (!response.ok) {
-
       throw new Error(
         "Could not load country map data."
       );
-
     }
 
-
-    return response.json();
-
-  })
-
-
-  .then(data => {
+    const data = await response.json();
 
     console.log(
       "World map loaded:",
@@ -726,58 +560,51 @@ fetch(
       "countries"
     );
 
-
-    // --------------------------------------------------------
-    // CREATE COUNTRY LAYERS
-    // --------------------------------------------------------
     L.geoJSON(
       data,
       {
-        // ====================================================
-        // COUNTRY STYLE
-        // ====================================================
         style: feature => {
           const countryCode = getCountryCode(feature);
           const foods = experiencesForCountry(countryCode);
-          const maximumFoodCount = getMaximumFoodCount()
-          if (foods.length > 0) {
-            return getExploredStyle(foods.length, maximumFoodCount);
-          } else {
-            return defaultStyle;
-          }
+
+          return foods.length > 0
+            ? getExploredStyle(
+                foods.length,
+                maximumFoodCount
+              )
+            : defaultStyle;
         },
 
-        // ====================================================
-        // COUNTRY EVENTS
-        // ====================================================
         onEachFeature: (feature, layer) => {
           const countryCode = getCountryCode(feature);
           const countryName = getCountryName(feature);
           const foods = experiencesForCountry(countryCode);
           const foodCount = foods.length;
 
-          // --------------------------------------------------
-          // SAVE COUNTRY LAYER
-          // --------------------------------------------------
           if (countryCode) {
             countryLayers.set(countryCode, layer);
           }
 
-          // ==================================================
-          // HOVER TOOLTIP
-          // ==================================================
           if (foodCount > 0) {
-            const foodLabel = foodCount === 1 ? "food explored": "foods explored";
-            const foodNames = foods.map(food => food.dish).join(" · ");
+            const foodLabel =
+              foodCount === 1
+                ? "food explored"
+                : "foods explored";
+
+            const foodNames = foods
+              .map(food => food.dish)
+              .join(" · ");
 
             layer.bindTooltip(
               `
                 <div class="country-tooltip-content">
                   <strong>${countryName}</strong>
+
                   <span class="tooltip-count">
                     ${foodCount}
                     ${foodLabel}
                   </span>
+
                   <span class="tooltip-foods">
                     ${foodNames}
                   </span>
@@ -792,9 +619,8 @@ fetch(
             layer.bindTooltip(
               `
                 <div class="country-tooltip-content">
-                  <strong>
-                    ${countryName}
-                  </strong>
+                  <strong>${countryName}</strong>
+
                   <span class="tooltip-unexplored">
                     Not explored yet
                   </span>
@@ -807,87 +633,101 @@ fetch(
             );
           }
 
-          // ==================================================
-          // MOUSE OVER
-          // ==================================================
           layer.on("mouseover", event => {
             if (foodCount > 0) {
-            // Dynamic calculation using hover function
-              const maximumFoodCount = getMaximumFoodCount();
-              const hoverStyle = getHoverExploredStyle(foodCount, maximumFoodCount);
+              const hoverStyle =
+                getHoverExploredStyle(
+                  foodCount,
+                  maximumFoodCount
+                );
+
               event.target.setStyle(hoverStyle);
             } else {
-              // Fallback to static unexplored hover styling
-                event.target.setStyle(hoverUnexploredStyle);
-              }
-              // Layer sorting check for clean rendering across browsers
-              if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge){
-                event.target.bringToFront();
-              }
+              event.target.setStyle(
+                hoverUnexploredStyle
+              );
             }
-          );
 
-          // ==================================================
-          // MOUSE OUT
-          // ==================================================
+            if (
+              !L.Browser.ie &&
+              !L.Browser.opera &&
+              !L.Browser.edge
+            ) {
+              event.target.bringToFront();
+            }
+          });
+
           layer.on("mouseout", event => {
-            if (foodCount > 0){
-              styleTile = getCountryStyle(foodCount, maximumFoodCount);
+            if (foodCount > 0) {
+              const styleTile =
+                getCountryStyle(
+                  foodCount,
+                  maximumFoodCount
+                );
+
               event.target.setStyle(styleTile);
-            } else{
+            } else {
               event.target.setStyle(defaultStyle);
             }
           });
 
-          // ==================================================
-          // CLICK
-          // ==================================================
           layer.on("click", () => {
-              if (foodCount > 0) {
-                showCountryJournal(countryName, countryCode);
-              } else {
-                showUnexploredCountry(countryName);
-              }
-           });
+            if (foodCount > 0) {
+              showCountryJournal(
+                countryName,
+                countryCode
+              );
+            } else {
+              showUnexploredCountry(
+                countryName
+              );
+            }
+          });
         }
       }
     ).addTo(map);
-    // --------------------------------------------------------
-    // DEBUG
-    // --------------------------------------------------------
 
     console.log(
       "Countries represented in our food journey:"
     );
 
+    experiences.forEach(experience => {
+      console.log(
+        experience.dish,
+        "→",
+        experience.countryCode
+      );
+    });
 
-    experiences.forEach(
-      experience => {
-
-        console.log(
-          experience.dish,
-          "→",
-          experience.countryCode
-        );
-
-      }
+  } catch (error) {
+    console.error(
+      "Could not load world map:",
+      error
     );
 
-  })
-
-
-  // ========================================================
-  // MAP ERROR
-  // ========================================================
-  .catch(error => {
-    console.error("Could not load world map:", error);
-
-    document.getElementById("map").insertAdjacentHTML(
-      "beforeend",
-      `<div style="position:absolute; z-index:1000; top:20px; left:20px; padding:20px; background:white; border radius:10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">The country map data could not be loaded.</div>`
-    );
-  });
-
+    document
+      .getElementById("map")
+      .insertAdjacentHTML(
+        "beforeend",
+        `
+          <div
+            style="
+              position:absolute;
+              z-index:1000;
+              top:20px;
+              left:20px;
+              padding:20px;
+              background:white;
+              border-radius:10px;
+              box-shadow:0 2px 5px rgba(0,0,0,0.2);
+            "
+          >
+            The country map data could not be loaded.
+          </div>
+        `
+      );
+  }
+}
 // ============================================================
 // COUNTRY JOURNAL
 // ============================================================
@@ -1421,59 +1261,41 @@ const uniqueCuisines =
   );
 
 
-document.getElementById(
-  "stats"
-).innerHTML = `
-
+document.getElementById("stats").innerHTML = `
   <div class="stat">
-
-    <span class="stat-number">
-      ${experiences.length}
-    </span>
-
-    <span class="stat-label">
-      Foods Tried
-    </span>
-
+    <span class="stat-number">${experiences.length}</span>
+    <span class="stat-label">Foods Tried</span>
   </div>
-
-
   <div class="stat">
-
-    <span class="stat-number">
-      ${uniqueCountries.size}
-    </span>
-
-    <span class="stat-label">
-      Countries
-    </span>
-
+    <span class="stat-number">${uniqueCountries.size}</span>
+    <span class="stat-label">Countries</span>
   </div>
-
-
   <div class="stat">
-
-    <span class="stat-number">
-      ${uniqueRegions.size}
-    </span>
-
-    <span class="stat-label">
-      Regions
-    </span>
-
+    <span class="stat-number">${uniqueRegions.size}</span>
+    <span class="stat-label">Regions</span>
   </div>
-
-
   <div class="stat">
-
-    <span class="stat-number">
-      ${uniqueCuisines.size}
-    </span>
-
-    <span class="stat-label">
-      Cuisines
-    </span>
-
+    <span class="stat-number">${uniqueCuisines.size}</span>
+    <span class="stat-label">Cuisines</span>
   </div>
-
 `;
+
+// ============================================================
+// START APPLICATION
+// ============================================================
+
+async function initializeApp() {
+  await loadExperiences();
+
+  maximumFoodCount =
+    getMaximumFoodCount(experiences);
+
+  console.log(
+    "Maximum food count:",
+    maximumFoodCount
+  );
+
+  await loadWorldMap();
+}
+
+initializeApp();
